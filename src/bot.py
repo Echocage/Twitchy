@@ -17,26 +17,21 @@ class Roboraj:
 
 
     def run(self):
-        irc = self.irc
-        sock = self.socket
-        config = self.config
 
         while True:
-            data = sock.recv(config['socket_buffer_size']).rstrip()
-
+            data = sock.recv(self.config['socket_buffer_size']).rstrip()
             if len(data) == 0:
                 pp('Connection was lost, reconnecting.')
                 sock = self.irc.get_irc_socket_object()
 
-            if config['debug']:
+            if self.config['debug']:
                 print(data)
 
             # check for ping, reply with pong
-            check_for_ping(data)
+            self.irc.check_for_ping(data)
 
             if check_for_message(data):
-                message_dict = irc.get_message(data)
-
+                message_dict = self.irc.get_message(data)
                 channel = message_dict['channel']
                 message = message_dict['message']
                 username = message_dict['username']
@@ -71,7 +66,7 @@ class Roboraj:
                                 if result:
                                     resp = '(%s) > %s' % (username, result)
                                     pbot(resp, channel)
-                                    irc.send_message(channel, resp)
+                                    self.irc.send_message(channel, resp)
 
                     else:
                         if commands.is_on_cooldown(command, channel):
@@ -90,4 +85,4 @@ class Roboraj:
                             commands.update_last_used(command, channel)
 
                             pbot(resp, channel)
-                            irc.send_message(channel, resp)
+                            self.irc.send_message(channel, resp)

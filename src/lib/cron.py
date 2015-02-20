@@ -10,6 +10,9 @@ class cron:
         self.irc = irc
         self.channel = channel
 
+    def messages(self):
+        pass
+
     def get_next_message(self):
         next_index = self.last_index + 1
 
