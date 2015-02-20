@@ -2,14 +2,12 @@ import logging
 import socket
 import re
 import sys
-from threading import Thread
-
-from . import cron
 
 
-class irc:
+class Twitch:
     def __init__(self, config):
         self.config = config
+        self.create_initial_connection()
 
     def check_for_ping(self, data):
         if data[:4] == "PING":
@@ -18,40 +16,56 @@ class irc:
     def send_message(self, channel, message):
         self.sock.send('PRIVMSG %s :%s\n' % (channel, message.encode('utf-8')))
 
-    def get_irc_socket_object(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-
-        self.sock = sock
+    def create_initial_connection(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(10)
 
         try:
-            sock.connect((self.config['server'], self.config['port']))
+            self.sock.connect((self.config['server'], self.config['port']))
         except:
             logging.error('Cannot connect to server (%s:%s).' % (self.config['server'], self.config['port']))
             sys.exit()
 
-        sock.settimeout(None)
+        self.sock.settimeout(None)
 
-        sock.send(bytes('USER %s\r\n' % self.config['username'], 'utf8'))
-        sock.send(bytes('PASS %s\r\n' % self.config['oauth_password'], 'utf8'))
-        sock.send(bytes('NICK %s\r\n' % self.config['username'], 'utf8'))
-
-        if check_login_status(sock.recv(1024)):
+        logged_in = self.login()
+        if logged_in:
             logging.info('Login successful.')
         else:
             logging.error('Login unsuccessful.'
                           ' (hint: make sure your oauth token is set in self.config/self.config.py).')
             sys.exit()
 
-        # start threads for channels that have cron messages to run
-        for channel in self.config['channels']:
-            if channel in self.config['cron']:
-                if self.config['cron'][channel]['run_cron']:
-                    Thread(target=cron.cron(self, channel).run)
-
         self.join_channels(channels_to_string(self.config['channels']))
 
-        return sock
+    def _get_update(self):
+        data = self.sock.recv(self.config['socket_buffer_size']).rstrip()
+        if len(data) == 0:
+            logging.warning('Connection was lost, reconnecting.')
+            self.socket = self.irc.create_initial_connection()
+            return
+        self.check_for_ping(data)
+
+        if not check_for_message(data):
+            return
+        return get_message(data)
+
+    def get_messages(self):
+        while True:
+            data = self._get_update()
+            if not data:
+                continue
+            yield data
+
+
+    def is_logged_in(self):
+        return check_login_status(self.sock.recv(1024))
+
+    def login(self):
+        self.sock.send(bytes('USER %s\r\n' % self.config['username'], 'utf8'))
+        self.sock.send(bytes('PASS %s\r\n' % self.config['oauth_password'], 'utf8'))
+        self.sock.send(bytes('NICK %s\r\n' % self.config['username'], 'utf8'))
+        return self.is_logged_in()
 
     def join_channels(self, channels):
         self.sock.send(bytes('JOIN %s\r\n' % channels, encoding='utf8'))
@@ -76,11 +90,10 @@ def check_for_connected(data):
 
 
 def get_message(data):
-    return {
-        'channel': re.findall(r'^:.+\![a-zA-Z0-9_]+@[a-zA-Z0-9_]+.+ PRIVMSG (.*?) :', data)[0],
-        'username': re.findall(r'^:([a-zA-Z0-9_]+)\!', data)[0],
-        'message': re.findall(r'PRIVMSG #[a-zA-Z0-9_]+ :(.+)', data)[0].decode('utf8')
-    }
+    channel = re.findall(r'^:.+\![a-zA-Z0-9_]+@[a-zA-Z0-9_]+.+ PRIVMSG (.*?) :', data.decode('utf8'))[0]
+    username = re.findall(r'^:([a-zA-Z0-9_]+)\!', data.decode('utf8'))[0]
+    message = re.findall(r'PRIVMSG #[a-zA-Z0-9_]+ :(.+)', data.decode('utf8'))[0]
+    return channel, username, message
 
 
 def check_login_status(data):
