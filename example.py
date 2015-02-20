@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import logging
 from Twitch import Twitch
-from Twitch.config_example import config
+from Twitch.config import config
+
 logging.basicConfig(level=logging.DEBUG)
 
 irc = Twitch(config)

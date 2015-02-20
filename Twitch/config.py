@@ -11,8 +11,7 @@ config = {  # details required to login to twitch IRC server
 
             'cron': {
                 '#channel_one': {
-                    'run_cron': False,
-                    # set this to false if you want don't want to run the cronjob but you want to preserve the messages etc
+                    'run_cron': False,  # False = No cron but still saves messages
                     'run_time': 5,  # time in seconds
                     'cron_messages': [
                         'This is channel_one cron message one.',
