@@ -1,3 +1,4 @@
+import socket
 import unittest
 from unittest.mock import Mock, patch, call
 
@@ -21,8 +22,12 @@ class TestTwitchy(unittest.TestCase):
         self.assertTrue(self.example_twitch.sock.send.called)
         self.assertEqual(self.example_twitch.sock.send.call_args, call(b'PRIVMSG blah :\n'))
 
-    def test_create_socket(self):
-        pass
+
+    def test_create_initial_connection(self):
+        with patch('socket.socket', return_value=Mock()) as mock_socket:
+            sock = self.example_twitch.create_initial_connection()
+            self.assertEqual(mock_socket.call_args, call(socket.AF_INET, socket.SOCK_STREAM))
+        self.assertEqual(sock.connect.call_args, call(('123', '123')))
 
     @patch('Twitch.Irc.is_logged_in', return_value=False)
     def test_login(self, mock_logged_in):
