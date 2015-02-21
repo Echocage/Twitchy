@@ -7,13 +7,13 @@ from Twitchy.utils import channels_to_string, check_for_message, get_message, ch
 
 class Irc:
     def __init__(self, username, oauth, server, port, channels, socket_buffer=2048):
-        self.sock = self.create_initial_connection()
         self.username = username
         self.oauth = oauth
         self.server = server
         self.port = port
         self.channels = channels
         self.socket_buffer = socket_buffer
+        self.sock = self.create_initial_connection()
 
     def check_for_ping(self, data):
         if data[:4] == "PING":
