@@ -7,13 +7,13 @@ from Twitch.utils import channels_to_string, check_for_message, get_message, che
 
 class Irc:
     def __init__(self, username, oauth, server, port, channels, socket_buffer=2048):
+        self.sock = self.create_initial_connection()
         self.username = username
         self.oauth = oauth
         self.server = server
         self.port = port
         self.channels = channels
         self.socket_buffer = socket_buffer
-        self.sock = self.create_initial_connection()
 
     def check_for_ping(self, data):
         if data[:4] == "PING":
@@ -25,7 +25,6 @@ class Irc:
     def create_initial_connection(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
-
         try:
             sock.connect((self.server, self.port))
         except:
@@ -88,4 +87,4 @@ class Irc:
     @staticmethod
     def from_config(config):
         return Irc(config['username'], config['oauth_password'], config['server'],
-                      config['port'], config['channels'], config['socket_buffer_size'])
+                   config['port'], config['channels'], config['socket_buffer_size'])
