@@ -22,11 +22,10 @@ class TestTwitchy(unittest.TestCase):
         self.assertTrue(self.example_twitch.sock.send.called)
         self.assertEqual(self.example_twitch.sock.send.call_args, call(b'PRIVMSG blah :\n'))
 
-
-    def test_create_initial_connection(self):
-        with patch('socket.socket', return_value=Mock()) as mock_socket:
-            sock = self.example_twitch.create_initial_connection()
-            self.assertEqual(mock_socket.call_args, call(socket.AF_INET, socket.SOCK_STREAM))
+    @patch('socket.socket', return_value=Mock())
+    def test_create_initial_connection(self, mock_socket):
+        sock = self.example_twitch.create_initial_connection()
+        self.assertEqual(mock_socket.call_args, call(socket.AF_INET, socket.SOCK_STREAM))
         self.assertEqual(sock.connect.call_args, call(('123', '123')))
 
     @patch('Twitchy.Irc.is_logged_in', return_value=False)
