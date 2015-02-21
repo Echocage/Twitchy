@@ -2,7 +2,7 @@ import logging
 import socket
 import sys
 
-from Twitch.utils import channels_to_string, check_for_message, get_message, check_login_status
+from Twitchy.utils import channels_to_string, check_for_message, get_message, check_login_status
 
 
 class Irc:

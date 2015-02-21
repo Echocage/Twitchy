@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from Twitch import Irc
-from Twitch.config import config
+from Twitchy import Irc
+from Twitchy.config import config
 
 
 twitch_chat = Irc.from_config(config)

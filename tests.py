@@ -2,13 +2,13 @@ import socket
 import unittest
 from unittest.mock import Mock, patch, call
 
-from Twitch import Irc
-import Twitch
+from Twitchy import Irc
+import Twitchy
 
 
 class TestTwitchy(unittest.TestCase):
     def setUp(self):
-        with patch('Twitch.Irc.create_initial_connection', return_value=Mock()):
+        with patch('Twitchy.Irc.create_initial_connection', return_value=Mock()):
             self.example_twitch = Irc('abc', '123', '123', '123', '#blah')
 
     def test_check_for_ping(self):
@@ -29,14 +29,14 @@ class TestTwitchy(unittest.TestCase):
             self.assertEqual(mock_socket.call_args, call(socket.AF_INET, socket.SOCK_STREAM))
         self.assertEqual(sock.connect.call_args, call(('123', '123')))
 
-    @patch('Twitch.Irc.is_logged_in', return_value=False)
+    @patch('Twitchy.Irc.is_logged_in', return_value=False)
     def test_login(self, mock_logged_in):
         self.assertFalse(self.example_twitch.login())
         self.assertEqual(self.example_twitch.sock.send.call_count, 3)
 
         mock_logged_in.return_value = True
         Irc.join_channels = Mock()
-        Twitch.channels_to_string = Mock()
+        Twitchy.channels_to_string = Mock()
         self.assertTrue(self.example_twitch.login())
 
     def test_send(self):
@@ -44,7 +44,7 @@ class TestTwitchy(unittest.TestCase):
         self.assertEqual(self.example_twitch.sock.send.call_count, 1)
         self.assertEqual(self.example_twitch.sock.send.call_args, call(b'123'))
 
-    @patch('Twitch.check_login_status')
+    @patch('Twitchy.check_login_status')
     def test_is_logged_in(self, mock_check_login):
         self.example_twitch.is_logged_in()
         self.assertTrue(mock_check_login.called)
